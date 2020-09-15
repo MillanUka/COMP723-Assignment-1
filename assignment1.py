@@ -6,6 +6,7 @@ from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.stem.porter import PorterStemmer
 stopwords = stopwords.words('english')
+from nltk.corpus import wordnet
 
 def remove_stop_words(text):
     words = [w for w in text if w not in stopwords]
@@ -14,14 +15,37 @@ def remove_stop_words(text):
 lemmatizer = WordNetLemmatizer()
 
 def word_lemmatizer(text):
-    lem_text = ([lemmatizer.lemmatize(i) for i in text])
+    lem_text = []
+    for i in text:
+        pos = i[1]
+        pos = convert_tag(pos)
+        x = None
+        if pos == '':
+            x = lemmatizer.lemmatize(i[0])
+        else:
+            x = lemmatizer.lemmatize(i[0], pos=pos)
+        lem_text.append(x)
     return lem_text
 
 stemmer = PorterStemmer()
 
+def convert_tag(tag):
+    if tag.startswith('J'):
+        return wordnet.ADJ
+    elif tag.startswith('V'):
+        return wordnet.VERB
+    elif tag.startswith('N'):
+        return wordnet.NOUN
+    elif tag.startswith('R'):
+        return wordnet.ADV
+    else:
+        return ''
 def word_stemmer(text):
-    stem_text = " ".join([stemmer.stem(i) for i in text])
-    return stem_text
+    stem_text = []
+    for i in text:
+        x = stemmer.stem(i)
+        stem_text.append(x)
+    return stem_text 
 
 def convert_side_effect_index(text):
     if text == "No Side Effects":
@@ -46,14 +70,25 @@ def convert_effectiveness_index(text):
         return 3
     else:
         return 4
+
+from nltk.tag import pos_tag
+def tag(text):
+    return pos_tag(text)
+
+def tokens_to_string(text):
+    string = ""
+    for i in text:
+        string += " " + i
+    return string
+
 test = pd.read_csv('drugLibTest_raw.tsv',delimiter='\t')    # Read the files with the pandas dataFrame
 train = pd.read_csv('drugLibTrain_raw.tsv', delimiter='\t')
 
 train.insert(1, column="review", value=None)
 train["review"] = train["benefitsReview"] + train["sideEffectsReview"]  + train["commentsReview"]
-train = train.drop(["Unnamed: 0", "benefitsReview", "sideEffectsReview", "commentsReview"], axis=1)
+train = train.drop(["Unnamed: 0", "benefitsReview", "sideEffectsReview", "commentsReview", "urlDrugName", "condition"], axis=1)
 test["review"] = test["benefitsReview"] + test["sideEffectsReview"]  + test["commentsReview"]
-test = test.drop(["Unnamed: 0", "benefitsReview", "sideEffectsReview", "commentsReview"], axis=1)
+test = test.drop(["Unnamed: 0", "benefitsReview", "sideEffectsReview", "commentsReview", "urlDrugName", "condition"], axis=1)
 
 #Tokenization
 #Converts the text into a list of tokens and removes any punctuation
@@ -65,13 +100,21 @@ test["review"] = test["review"].apply(lambda x: tokenizer.tokenize((str)(x).lowe
 train["review"] = train["review"].apply(lambda x: remove_stop_words(x))
 test["review"] = test["review"].apply(lambda x: remove_stop_words(x))
 
+train["review"] = train["review"].apply(lambda x: tag(x))
+test["review"] = test["review"].apply(lambda x: tag(x))
+
+print("lemmatization")
 # Lemmatization
 train["review"] = train["review"].apply(lambda x: word_lemmatizer(x))
 test["review"] = test["review"].apply(lambda x: word_lemmatizer(x))
 
-#Stemmerization
-train["review"] = train["review"].apply(lambda x: word_stemmer(x))
-test["review"] = test["review"].apply(lambda x: word_stemmer(x))
+# Stemmerization
+# train["review"] = train["review"].apply(lambda x: word_stemmer(x))
+# test["review"] = test["review"].apply(lambda x: word_stemmer(x))
+
+# tokens to string
+train["review"] = train["review"].apply(lambda x: tokens_to_string(x))
+test["review"] = test["review"].apply(lambda x: tokens_to_string(x))
 
 train["sideEffects"] = train["sideEffects"].apply(lambda x: convert_side_effect_index(x))
 test["sideEffects"] = test["sideEffects"].apply(lambda x: convert_side_effect_index(x))
@@ -80,28 +123,25 @@ train["effectiveness"] = train["effectiveness"].apply(lambda x: convert_effectiv
 test["effectiveness"] = test["effectiveness"].apply(lambda x: convert_effectiveness_index(x))
 
 from sklearn.feature_extraction.text import  TfidfVectorizer, CountVectorizer, TfidfTransformer
-vectorizer = CountVectorizer(max_features=150)
+vectorizer=TfidfVectorizer(use_idf=True, max_features=150, ngram_range=(3, 3))
+
 x = vectorizer.fit_transform(train["review"]).toarray()
-x_train = pd.DataFrame(x, columns =vectorizer.get_feature_names())
+x_train = pd.DataFrame(x,columns=vectorizer.get_feature_names())
 x_train["rating"] = train["rating"]
 x_train["effectiveness"] = train["effectiveness"]
     
 x = vectorizer.fit_transform(test["review"]).toarray()
-x_test = pd.DataFrame(x, columns =vectorizer.get_feature_names())
+x_test = pd.DataFrame(x,columns=vectorizer.get_feature_names())
 x_test["rating"] = test["rating"]
 x_test["effectiveness"] = test["effectiveness"]
 
-from sklearn.preprocessing import LabelEncoder
-le = LabelEncoder()
-label_encode = ["urlDrugName", "condition"]
-for feature in label_encode:
-    train[feature] = le.fit_transform(train[feature].astype(str))
-    test[feature] = le.fit_transform(test[feature].astype(str))
+x_train = x_train.dropna()
+x_test = x_test.dropna()
 
 y_train = train["sideEffects"]
 y_test = test["sideEffects"]
 
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.metrics import classification_report
 print("SVM")
 from sklearn.svm import SVC
 classifier = SVC(gamma='auto', C=1, class_weight='balanced')
@@ -109,9 +149,7 @@ classifier.fit(x_train, y_train)
 
 target_names = ['No Side Effects', 'Mild Side Effects', 'Moderate Side Effects', 'Severe Side Effects', 'Extremely Severe Side Effects']
 y_pred = classifier.predict(x_test)
-print(confusion_matrix(y_test,y_pred))
 print(classification_report(y_test,y_pred, target_names=target_names))
-print(accuracy_score(y_test, y_pred))
 
 print("Decision Tree")
 from sklearn.tree import DecisionTreeClassifier
@@ -119,11 +157,9 @@ classifier = DecisionTreeClassifier(max_depth=6, random_state=1)
 classifier.fit(x_train, y_train)
 
 y_pred = classifier.predict(x_test)
-print(confusion_matrix(y_test,y_pred))
 print(classification_report(y_test,y_pred, target_names=target_names))
-print(accuracy_score(y_test, y_pred))
-from sklearn.metrics import precision_score
-print()
+
+
 # Grid search to find the optimal parameters
 # from sklearn.model_selection  import GridSearchCV
 # param_grid = {'C':[1,10,100,1000], 'gamma':[1,0.1,0.001,0.0001,'auto'], 'kernel':['linear','rbf'],'class_weight' : ['balanced', None]}

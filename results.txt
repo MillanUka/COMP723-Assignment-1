@@ -1,0 +1,78 @@
+Iteration 1
+SVM
+                               precision    recall  f1-score   support
+
+              No Side Effects       0.56      0.65      0.60       268
+            Mild Side Effects       0.53      0.44      0.48       330
+        Moderate Side Effects       0.47      0.39      0.43       236
+          Severe Side Effects       0.36      0.39      0.38       122
+Extremely Severe Side Effects       0.49      0.75      0.59        80
+
+                     accuracy                           0.50      1036
+                    macro avg       0.48      0.52      0.50      1036
+                 weighted avg       0.50      0.50      0.50      1036
+
+Decision Tree
+                               precision    recall  f1-score   support
+
+            Mild Side Effects       0.50      0.62      0.55       330
+        Moderate Side Effects       0.50      0.42      0.46       236
+          Severe Side Effects       0.44      0.25      0.32       122
+Extremely Severe Side Effects       0.56      0.80      0.66        80
+
+                     accuracy                           0.52      1036
+                    macro avg       0.52      0.53      0.51      1036
+                 weighted avg       0.52      0.52      0.51      1036
+
+Iteration 2
+SVM
+                               precision    recall  f1-score   support
+
+              No Side Effects       0.56      0.65      0.60       268
+            Mild Side Effects       0.53      0.44      0.48       330
+        Moderate Side Effects       0.47      0.39      0.43       236
+          Severe Side Effects       0.36      0.39      0.38       122
+Extremely Severe Side Effects       0.49      0.75      0.59        80
+
+                     accuracy                           0.50      1036
+                    macro avg       0.48      0.52      0.50      1036
+                 weighted avg       0.50      0.50      0.50      1036
+
+Decision Tree
+                               precision    recall  f1-score   support
+
+            Mild Side Effects       0.50      0.62      0.55       330
+        Moderate Side Effects       0.50      0.42      0.46       236
+          Severe Side Effects       0.44      0.25      0.32       122
+Extremely Severe Side Effects       0.56      0.80      0.66        80
+
+                     accuracy                           0.52      1036
+                    macro avg       0.52      0.53      0.51      1036
+                 weighted avg       0.52      0.52      0.51      1036
+
+Iteration 3
+SVM
+                               precision    recall  f1-score   support
+
+              No Side Effects       0.56      0.65      0.60       268
+            Mild Side Effects       0.53      0.44      0.48       330
+        Moderate Side Effects       0.47      0.39      0.43       236
+          Severe Side Effects       0.36      0.39      0.38       122
+Extremely Severe Side Effects       0.49      0.75      0.59        80
+
+                     accuracy                           0.50      1036
+                    macro avg       0.48      0.52      0.50      1036
+                 weighted avg       0.50      0.50      0.50      1036
+
+Decision Tree
+                               precision    recall  f1-score   support
+
+              No Side Effects       0.60      0.54      0.57       268
+            Mild Side Effects       0.50      0.62      0.55       330
+        Moderate Side Effects       0.50      0.42      0.46       236
+          Severe Side Effects       0.44      0.25      0.32       122
+Extremely Severe Side Effects       0.56      0.80      0.66        80
+
+                     accuracy                           0.52      1036
+                    macro avg       0.52      0.53      0.51      1036
+                 weighted avg       0.52      0.52      0.51      1036
